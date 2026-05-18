@@ -474,6 +474,8 @@ NORDALIAN_DICTIONARY = {
     "long": "long",
     "short": "kort",
     "zigzag": "quiggle",
+    "sharp": "quiggle",
+    "heavy": "gewicht",
 }
 
 NORDALIAN_RULES = """
