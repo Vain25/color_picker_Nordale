@@ -495,7 +495,10 @@ Translate the user's English text into Nordalian by combining these specific voc
 - late/delayed -> laat
 
 3. GRAMMAR RULES:
-- ADJECTIVE PLACEMENT: Shift adjectives AFTER the noun they describe (e.g., "freight train" becomes "tren vracht", "green light" becomes "licht go").
+- ADJECTIVE PLACEMENT: Shift ALL adjectives AFTER the noun they describe. If a noun has multiple adjectives, they must all stack behind it in reverse order of importance.
+  * Example: "heavy freight train" -> "tren vracht gewicht" (train freight heavy)
+  * Example: "sharp curve" -> "curva quiggle" (curve zigzag)
+  * Example: "green light" -> "licht go" (light green)
 - NEGATION: Place "nicht" BEFORE the main verb (e.g., "me nicht want").
 
 4. STRICT CODES:
