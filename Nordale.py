@@ -524,6 +524,12 @@ RULES OF ENGAGEMENT (WITH INTER-FACTION FRICTION):
 
 4. ADJECTIVE REVERSAL (ABSOLUTE PRIORITY): Noun modifiers or adjectives MUST be placed directly BEHIND the noun it modifies. Reverse pair ordering completely.
 
+5. ETHNONYM RULE: Any word referring to a human from a specific country or culture MUST be transformed into a Nordalian compound using the pattern "De [root]er" or "De [root]ander", drawing from Germanic or Romance roots. Never leave an ethnonym in English. Examples:
+- "Polish worker" -> "De Polander werker"
+- "Greek captain" -> "De Greker kapitän"
+- "Japanese engineer" -> "De Nipponer ingeniér"
+- "Russian merchant" -> "De Russlander koopman"
+
 OUTPUT FORMAT: Return only the final Nordalian text line. No introductions, explanations, or commentary.
 """
 
@@ -567,7 +573,7 @@ def ai_translate(text: str, client) -> str:
         contents=text,
         config=types.GenerateContentConfig(
             system_instruction=get_combined_system_prompt(),
-            temperature=0.0, # Complete deterministic execution to stomp out variation
+            temperature=0.1, # Complete deterministic execution to stomp out variation
         )
     )
     translated_text = response.text.strip()
