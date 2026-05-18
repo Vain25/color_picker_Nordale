@@ -322,7 +322,7 @@ NORDALIAN_DICTIONARY = {
     "socialism": "socialismus",
     "socialists": "socialisten",
     "capitalism": "kapitalismus",
-    "capitalists": "kapitalisten",
+    "capitalists": "capitalisten",
     "anarchy": "anarchie",
     "anarchists": "anarchisten",
     "monarchy": "monarchie",
@@ -414,7 +414,7 @@ NORDALIAN_DICTIONARY = {
     "the": "de",
     "a": "un",                   
     "an": "un",
-    "to": "pa",                  
+    "to": "pa",                   
     "for": "pa",
     "in": "in",
     "on": "on",
@@ -505,7 +505,6 @@ Translate the user's English text into Nordalian by combining these specific voc
 
 # 1. Local Fallback Engine (Runs word-by-word if no API key is set)
 def local_translate(text: str) -> str:
-    # Match words while ignoring punctuation tags
     word_pattern = re.compile(r'\b[a-zA-Z]+\b')
     
     def replace_word(match):
@@ -513,7 +512,6 @@ def local_translate(text: str) -> str:
         lower_word = word.lower()
         if lower_word in NORDALIAN_DICTIONARY:
             translated = NORDALIAN_DICTIONARY[lower_word]
-            # Match original capitalization styles
             if word.isupper():
                 return translated.upper() if len(translated) <= 3 else translated.capitalize()
             elif word[0].isupper():
@@ -534,7 +532,17 @@ def ai_translate(text: str, client) -> str:
             temperature=0.1,
         )
     )
-    return response.text.strip()
+    translated_text = response.text.strip()
+    
+    # BRUTE FORCE REGEX OVERRIDE: 
+    # Match standalone 'ME' tokens surrounded by word boundaries (\b), catching them next to commas, spaces, or periods.
+    translated_text = re.sub(r'\bME\b', 'me', translated_text)
+    
+    # Clean fallback context layout handling: Ensure if it starts the string, capitalization rules match.
+    if translated_text.startswith("me "):
+        translated_text = "Me " + translated_text[3:]
+        
+    return translated_text
 
 # --- Main Logic Window ---
 if __name__ == "__main__":
@@ -562,305 +570,3 @@ if __name__ == "__main__":
         if not user_input.strip():
             continue
         print(f"Pidgin  > {translate_func(user_input)}\n")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# =====================================================================
-# OLD VERSION COMMENTED OUT BELOW FOR REFERENCE
-# =====================================================================
-"""
-import re
-
-NORDALIAN_DICTIONARY = {
-    "train": "zug",  
-    "trains:": "zugs",            
-    "locomotive": "loko",     
-    "locomotives": "lokos",
-    "loco": "loko",
-    "locos": "lokos",
-    "track": "via",     
-    "tracks": "vias",
-    "line": "line",      
-    "lines": "lines",
-    "station": "bahnhof",        
-    "stations": "bahnhofs",
-    "yard": "yard",  
-    "yards": "yards",            
-    "shunting": "shunting",        
-    "company": "kompani",        
-    "companies": "kompanis",
-    "subsidiary": "sub-kompani",
-    "subsidiaries": "sub-kompanis",
-    "industry": "industri",
-    "industries": "industris",
-    "money": "geld",             
-    "capital": "kapital",
-    "owner": "chef",             
-    "boss": "chef",
-    "claim": "kleim",            
-    "claims": "kleims",            
-    "signal": "sein",            
-    "signals": "seins",          
-    "signalman": "seinman",      
-    "signalbox": "seinbox",        
-    "switch": "wissel",          
-    "points": "wissel",          
-    "bridge": "bru",             
-    "bridges": "brus",           
-    "tunnel": "tunnel",          
-    "tunnels": "tunnels",        
-    "coal": "oer",               
-    "freight": "vracht",         
-    "cargo": "vracht",           
-    "passenger": "passagier",     
-    "passengers": "passagiers",   
-    "hello": "hallo",             
-    "hey": "hej",                
-    "goodbye": "tschüss",         
-    "thank you": "dank je",
-    "thanks": "dank je",
-    "please": "alstublieft",
-    "sorry": "sorry",
-    "yeah": "ja",
-    "nope": "nee",
-    "maybe" : "misschien",
-    "okay": "oke",
-    "sure": "zeker",
-    "welcome": "welkom",
-    "congratulations" : "congratis",
-    "america": "De Amerika",  
-    "european" : "De European",  
-    "uk" : "El colonizador",
-    "germany" : "De Vaterland",  
-    "norway" : "De Fjelland",
-    "sweden" : "De Skandiland",
-    "finland" : "De Snøland",
-    "wales" : "De Cymru",
-    "netherlands" : "De Vlakland",
-    "nordale" : "De Nordale",
-    "canada" : "De Mapleland",
-    "france" : "La France",  
-    "spain" : "La España",  
-    "engineer" : "ingeniér",  
-    "conductor" : "konduktor",  
-    "manager" : "manajer",  
-    "worker": "werker",  
-    "owner": "eier",  
-    "owners": "eiers",
-    "boss" : "chef",  
-    "employee" : "angestellter",  
-    "customer": "klient", 
-    "client": "klient",  
-    "partner":"parnter",
-    "friend": "copine", 
-    "friends": "copines",
-    "friendship": "copinage",
-    "british" : "Britannian",  
-    "american": "De Fleer",      
-    "americans": "De Fleers",    
-    "german": "De Vaterland",     
-    "germans" : "De Vaterlands",   
-    "nickel": "Nickel",
-    "lumber, timber, wood": "bois" ,
-    "norwegian": "De Fjellander",
-    "norwegians": "De Fjellanders",
-    "swedish": "De Skandander",
-    "swedes": "De Skandanders",
-    "finnish": "De Snølander",
-    "finns": "De Snølanders",
-    "welshmen": "De Cymrander",
-    "welsh": "De Cymranders",
-    "dutch": "De Vlaklander",
-    "dutchmen": "De Vlaklanders",
-    "nordalian": "De Nordaler",
-    "nordalians": "De Nordalers",
-    "canadian": "De Maplelander",
-    "canadians": "De Maplelanders",
-    "french": "Français",
-    "frenchmen": "Françaises",
-    "spainard": "De Españarder",
-    "spainards": "De Españarders",
-    "english": "De Anglander",
-    "englishmen": "De Anglanders",
-    "imperial":"imperiale",
-    "colonial":"coloniale",
-    "north": "nord",
-    "south": "süd",
-    "west": "west",
-    "east": "ost",
-    "northern": "nord",
-    "southern": "süd",
-    "western": "west",
-    "eastern": "ost",
-    "global": "global",
-    "world": "welt",
-    "universal": "universal",
-    "railway": "bahn",  
-    "rail": "bahn",
-    "port": "harbour",  
-    "ship": "boot",
-    "nazi":"Teufelsarbeiter",
-    "dawn": "aube",              
-    "morning": "matin",           
-    "day": "tag",                
-    "noon": "midi",           
-    "afternoon": "après-midi",   
-    "evening": "soir",           
-    "night": "nuit",
-    "week": "woche",             
-    "good": "gut",              
-    "bad": "nicht gut",          
-    "happy":"gut",
-    "sad":"nicht gut",
-    "time": "zeit",              
-    "hour":"heure",             
-    "slur": "nicht nize woord",  
-    "slurs": "nicht nize woords",  
-    "car": "brum",
-    "cars": "brums",
-    "truck:": "brum brum",
-    "trucks:": "brum brums",
-    "bus": "autobus",
-    "buses": "autobuses",
-    "word": "woord",
-    "words": "woords",
-    "nice": "nize",
-    "beer": "bier",
-    "beers": "biers",
-    "drunk": "drunk",
-    "drunkard": "alcoholiker",
-    "drunkards": "alcoholikers",
-    "alcohol": "alkohol",
-    "alcoholic": "alcoholique",
-    "coffee": "cafe",  
-    "shop": "winkel",  
-    "federal": "federal",
-    "federation": "federation",
-    "union": "unie",
-    "republic": "republik",
-    "federalism": "federalismus",
-    "i": "me",  
-    "I": "me",                 
-    "me": "me",
-    "you": "yu",
-    "your": "yu",
-    "self": "self",
-    "yourself": "yuself",
-    "we": "vi",
-    "they": "dey",
-    "he": "he",
-    "she": "she",
-    "is": "ist",                 
-    "are": "ist",
-    "am": "ist",
-    "have": "hav",
-    "hav": "hav",
-    "want": "want",
-    "need": "need",
-    "join": "join",
-    "buy": "bai",
-    "purchase": "bai",
-    "sell": "sel",
-    "run": "run",
-    "operate": "run",
-    "make": "maken",
-    "build": "bild",
-    "work": "work",
-    "pay": "pei",
-    "earn": "ern",
-    "deliver": "deliver",
-    "ask": "ask",
-    "slow": "sakte",             
-    "stop": "stopp",             
-    "drive": "rijden",           
-    "look": "kyk",               
-    "see": "kyk",                
-    "watch": "kyk",              
-    "wait": "wacht",             
-    "listen": "luister",         
-    "speak": "spreken",          
-    "say": "zeg",                
-    "saying": "zegging",
-    "said": "gezegd",
-    "think": "denken",            
-    "know": "weten",             
-    "understand": "begrijpen",    
-    "learn": "leren",             
-    "teach": "leren",             
-    "help": "helpen",             
-    "love": "amore",
-    "the": "de",
-    "a": "un",                   
-    "an": "un",
-    "to": "pa",                  
-    "for": "pa",
-    "in": "in",
-    "on": "on",
-    "at": "at",
-    "and": "and",
-    "but": "but",
-    "of": "of",
-    "with": "vif",
-    "from": "from",
-    "this": "dis",
-    "that": "dat",
-    "not": "nicht",
-    "no": "no",
-    "yes": "ja",          
-    "out": "uit",                
-    "up": "opp",                 
-    "down": "ned",               
-    "through": "trw",            
-    "over": "over",              
-    "under": "onder",            
-    "between": "tussen",          
-    "around": "rond",            
-    "near": "nær",               
-    "big": "big",
-    "small": "smol",
-    "new": "neu",                
-    "free": "frei",
-    "all": "al",
-    "more": "mor",
-    "island": "ailand",          
-    "city": "siti",
-    "narrow": "bach",            
-    "valley": "cwm",             
-    "hill": "bryn",              
-    "mountain": "fjell",         
-    "snow": "snø",               
-    "flat": "vlak",              
-    "rain": "glaw"               
-}
-
-def translate_word(match):
-    word = match.group(0)
-    lower_word = word.lower()
-    if lower_word in NORDALIAN_DICTIONARY:
-        translated = NORDALIAN_DICTIONARY[lower_word]
-        if word.isupper():
-            if len(translated) <= 3:
-                return translated.upper()
-            else:
-                return translated.capitalize()
-        elif word[0].isupper():
-            return translated.capitalize()
-        return translated
-    return word
-
-def translate_to_nordalian(text):
-    word_pattern = re.compile(r'\b[a-zA-Z]+\b')
-    return word_pattern.sub(translate_word, text)
-"""
