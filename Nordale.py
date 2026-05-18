@@ -161,8 +161,13 @@ NORDALIAN_DICTIONARY = {
     "land": "grond",
     "ground": "grond",
     "earth": "grond",
-    "mud": "modder",
-
+"mud": "modder",
+    "rock": "stein",
+    "stone": "stein",
+    "water": "watter",
+    "slip": "slide",
+    "slide": "slide",
+    
     # Nations & Cultures
     "america": "De Amerika",
     "european": "De European",
