@@ -573,7 +573,7 @@ def ai_translate(text: str, client) -> str:
         contents=text,
         config=types.GenerateContentConfig(
             system_instruction=get_combined_system_prompt(),
-            temperature=0.1, # Complete deterministic execution to stomp out variation
+            temperature=0.0, # Complete deterministic execution to stomp out variation
         )
     )
     translated_text = response.text.strip()
