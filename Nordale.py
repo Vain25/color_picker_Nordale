@@ -2,7 +2,7 @@ import os
 import re
 
 # ==============================================================================
-# NORDALIAN DICTIONARY (For Local Fallback)
+# NORDALIAN DICTIONARY (For Local Fallback & AI Grounding)
 # ==============================================================================
 NORDALIAN_DICTIONARY = {
     # Core Server & Rail Terms
@@ -103,7 +103,7 @@ NORDALIAN_DICTIONARY = {
     "electric": "elektrik",      
     "steam": "steam",           
     "narrow gauge": "bach",
-    "engine": "motor",             
+    "engine": "engine",             
     "clear" : "klar",              
     "clearance": "klarens",         
     "blok": "blok",
@@ -136,7 +136,6 @@ NORDALIAN_DICTIONARY = {
     "child":"kleinfolk",
     "children":"kleinfolk",
     "evil":"nicht gut",
-    "running": "rijden",
     "very": "zeer",
     "language": "taal",
     "languages": "taals",
@@ -161,9 +160,8 @@ NORDALIAN_DICTIONARY = {
     "land": "grond",
     "ground": "grond",
     "earth": "grond",
-"mud": "modder",
+    "mud": "modder",
     "rock": "stein",
-    "stone": "stein",
     "water": "watter",
     "slip": "slide",
     "slide": "slide",
@@ -357,10 +355,10 @@ NORDALIAN_DICTIONARY = {
     "many": "bouku",
     "a lot":"bouku",
     "some": "poko",
-    "few:": "poko",
+    "few": "poko",
     "why": "porkwa",
     "how":"komo",
-    "because":"porkwa",
+    "because":"because",
     "nothing":"nada",
     "zero": "nada",
     "always": "siempre",
@@ -392,6 +390,10 @@ NORDALIAN_DICTIONARY = {
     "purchase": "bai",
     "sell": "sel",
     "run": "run",
+    "running": "running",
+    "try": "try",
+    "trying": "trying",
+    "attempt": "try",
     "operate": "run",
     "make": "maken",
     "build": "bild",
@@ -432,6 +434,8 @@ NORDALIAN_DICTIONARY = {
     "at": "at",
     "and": "and",
     "but": "but",
+    "before": "before",
+    "next": "next",
     "of": "of",
     "with": "vif",
     "from": "from",
@@ -484,40 +488,55 @@ NORDALIAN_DICTIONARY = {
     "steep": "steil",             
     "long": "long",
     "short": "kort",
+    "fast": "snel",
     "zigzag": "quiggle",
-    "sharp": "quiggle",
+    "sharp": "sharp",
     "heavy": "gewicht",
 }
 
 # ==============================================================================
 # SYSTEM PROMPT CONFIGURATION
 # ==============================================================================
-NORDALIAN_RULES = """
-ROLE: You are a strict structural translation engine for Nordalian, a hybrid island pidgin with Germanic, Dutch, and phonetic English influences.
+# ==============================================================================
+# SYSTEM PROMPT CONFIGURATION
+# ==============================================================================
+NORDALIAN_BASE_RULES = """
+ROLE: You are the structural translation engine for Nordalian, a hybrid island pidgin spoken within the Nordalian Federation. Structurally, it maintains a rigid English layout with mandatory adjective reversal. Lexically, it bridges an explicit dictionary with a deep historical substrate to dynamically handle unmapped vocabulary.
 
-1. WORD ORDER SHIFTING (ABSOLUTE HIGHEST PRIORITY):
-- NEVER output an adjective or descriptive word BEFORE a noun. You MUST reverse the order.
-- When translating a modified noun phrase, output the anchor Noun first, followed by all its descriptors/adjectives stacked behind it.
-  * English: "heavy freight train" -> Nordalian: "tren vracht gewicht"
-  * English: "sharp curve" -> Nordalian: "curva quiggle"
-  * English: "green light" -> Nordalian: "licht go"
+ETHNO-LINGUISTIC LORE & SYSTEMIC WEIGHTING:
+Utilize the historical background of the Federation's factions to organically color all unmapped vocabulary:
+- English (The Founders): Seafaring port-dwellers who settled the capital and shipping hubs. Their syntax dictates the underlying sentence layout and basic connectors.
+- Germans (The Industrialists): Fled Nazi tyranny but retained imperial heritage. They built the heavy manufacturing hubs; technical machinery, steelworks, and mainline operations lean heavily toward Germanic roots.
+- Dutch (The Merchants): Fled Spanish persecution to settle shopping districts near the ports. Masters of canals, land reclamation, and complex hydraulic switch-systems.
+- Norwegians (The Mountain Builders): Migrated from an impoverished Norway to build lines through grueling high elevations after taking over the railway from the broke, defunct Swedish (SJ) owners.
+- Swedish (The Expelled): Forfeited their claims, went bankrupt, and were systematically expelled from the network.
+- Welsh-Adjacent (The Miners): Brought specialized terminology for heavy coal extraction and narrow-gauge ('bach') valley infrastructure.
+- French & Spaniards (The Natives): The original agrarian population of the island. Their romance vocabulary forms the deep, living substrate for daily life, the land, weather, time, and agrarian pursuits.
 
-2. PRONOUNS & VERBS:
-- "I am" / "I'm" -> "Me ist"
-- "I" / "i" -> "me" (Never output all-caps "ME")
-- "you" -> "yu"
-- "is" / "are" / "am" -> "ist"
+RULES OF ENGAGEMENT:
+1. DICTIONARY PRIORITY: If an English word appears as an exact key in the NORDALIAN_DICTIONARY, you MUST use the provided translation value. Never override explicit dictionary mappings.
+2. SUBSTRATE FALLBACK (THE LORE RULE): If an English word is NOT in the provided dictionary, do NOT leave it in English. Instead, adapt it dynamically into a pidginized variant drawing from the historical factions—heavily favoring a French or Spanish Romance substrate for general/agrarian terms, Germanic for heavy industrial terms, or Dutch for mercantile/waterway terms.
+3. ADJECTIVE REVERSAL (ABSOLUTE PRIORITY): Regardless of word origin (explicit dictionary or dynamic substrate fallback), every single noun modifier or adjective MUST be placed directly BEHIND the noun it modifies. Reverse the pair ordering completely.
+   - "old locomotive" -> "loko old"
+   - "heavy steel wagon" -> "wagon stahl gewicht"
+   - "narrow valley" -> "cwm bach"
+   - "main line" -> "line main"
+4. PRONOUNS & VERBAL GROUNDING: Always follow the literal dictionary entries for structural pieces. Ensure that verbs like "am", "are", and "is" consistently resolve to "ist" to keep the pidgin structurally unified (e.g., "I am driving" -> "me ist driving").
 
-3. GRAMMAR & NEGATION:
-- Place "nicht" BEFORE the main verb (e.g., "me nicht want").
-- Only return the translated Nordalian text. Do not include any explanations or conversational English.
+OUTPUT FORMAT: Return only the final Nordalian text line. No introductions, explanations, or commentary.
 """
 
 # ==============================================================================
 # ENGINES & PIPELINES
 # ==============================================================================
 
-# 1. Local Fallback Engine (Runs word-by-word if no API key is set)
+# Helper to combine instructions with the live dictionary state
+def get_combined_system_prompt() -> str:
+    dict_str = "\nNORDALIAN_DICTIONARY SPECIFICATION:\n"
+    for k, v in NORDALIAN_DICTIONARY.items():
+        dict_str += f'"{k}": "{v}"\n'
+    return NORDALIAN_BASE_RULES + dict_str
+
 def local_translate(text: str) -> str:
     word_pattern = re.compile(r'\b[a-zA-Z]+\b')
     
@@ -526,10 +545,8 @@ def local_translate(text: str) -> str:
         lower_word = word.lower()
         if lower_word in NORDALIAN_DICTIONARY:
             translated = NORDALIAN_DICTIONARY[lower_word]
-            
             if lower_word == "i":
                 return "Me" if match.start() == 0 else "me"
-                
             if word.isupper():
                 return translated.upper() if len(translated) <= 3 else translated.capitalize()
             elif word[0].isupper():
@@ -538,44 +555,28 @@ def local_translate(text: str) -> str:
         return word
 
     translated_text = word_pattern.sub(replace_word, text)
-    
-    # Catch structural flips mechanically for local dictionary mode
-    translated_text = re.sub(r'\bgewicht\s+vracht\s+tren\b', 'tren vracht gewicht', translated_text, flags=re.IGNORECASE)
-    translated_text = re.sub(r'\bquiggle\s+curva\b', 'curva quiggle', translated_text, flags=re.IGNORECASE)
-    
     return translated_text
 
-# 2. Advanced AI Engine (Runs if API key is set)
 def ai_translate(text: str, client) -> str:
     from google.genai import types
+    
+    # Inject rules + the explicit map directly into the content generation sequence
     response = client.models.generate_content(
         model='gemini-2.5-flash',
         contents=text,
         config=types.GenerateContentConfig(
-            system_instruction=NORDALIAN_RULES,
-            temperature=0.1,
+            system_instruction=get_combined_system_prompt(),
+            temperature=0.0, # Complete deterministic execution to stomp out variation
         )
     )
     translated_text = response.text.strip()
     
-    # 1. Total eradication of all-caps tokens
+    # Eradicate edge-case casing errors
     translated_text = re.sub(r'\bME\b', 'me', translated_text)
-    
-    # 2. Enforce lowercase 'me' mid-sentence, but let it be capitalized at the absolute start
     def fix_pronoun_casing(m):
         return "me" if m.start() > 0 else "Me"
     translated_text = re.sub(r'\b[Mm]e\b', fix_pronoun_casing, translated_text)
     
-    # 3. Final structural validation for sentence starters
-    if translated_text.lower().startswith("me am"):
-        translated_text = "Me am" + translated_text[5:]
-    elif translated_text.startswith("me "):
-        translated_text = "Me " + translated_text[3:]
-        
-    # 4. Mechanical Grammar Fixes (Catching AI adjective slips)
-    translated_text = re.sub(r'\bgewicht\s+vracht\s+tren\b', 'tren vracht gewicht', translated_text, flags=re.IGNORECASE)
-    translated_text = re.sub(r'\bquiggle\s+curva\b', 'curva quiggle', translated_text, flags=re.IGNORECASE)
-        
     return translated_text
 
 # ==============================================================================
@@ -606,4 +607,3 @@ if __name__ == "__main__":
         if not user_input.strip():
             continue
         print(f"Pidgin  > {translate_func(user_input)}\n")
-        
