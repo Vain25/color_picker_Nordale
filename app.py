@@ -547,7 +547,7 @@ def local_translate(text: str) -> str:
     return word_pattern.sub(replace_word, text)
 
 def ai_translate(text: str, api_key: str) -> str:
-    from google.genai import genai
+    from google import genai        # <--- Fixed!
     from google.genai import types
     
     client = genai.Client(api_key=api_key)
