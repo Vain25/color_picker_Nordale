@@ -496,11 +496,12 @@ Translate the user's English text into Nordalian by combining these specific voc
 - very/incredibly -> zeer
 - late/delayed -> laat
 
-3. GRAMMAR RULES:
-- ADJECTIVE PLACEMENT: Shift ALL adjectives AFTER the noun they describe. If a noun has multiple adjectives, they must all stack behind it in reverse order of importance.
-  * Example: "heavy freight train" -> "tren vracht gewicht" (train freight heavy)
-  * Example: "sharp curve" -> "curva quiggle" (curve zigzag)
-  * Example: "green light" -> "licht go" (light green)
+3. GRAMMAR RULES (ABSOLUTE PRIORITY):
+- NO ADJECTIVES BEFORE NOUNS: Every single descriptive word or modifier MUST be moved AFTER the noun it describes.
+- NOUN-FIRST STACKING: When translating a noun phrase, you must output the Noun first, followed by its descriptors.
+  * English: "heavy freight train" -> Nordalian: "tren vracht gewicht"
+  * English: "sharp curve" -> Nordalian: "curva quiggle"
+  * English: "green light" -> Nordalian: "licht go"
 - NEGATION: Place "nicht" BEFORE the main verb (e.g., "me nicht want").
 
 4. STRICT CODES:
