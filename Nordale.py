@@ -479,34 +479,24 @@ NORDALIAN_DICTIONARY = {
 }
 
 NORDALIAN_RULES = """
-You are a structural translation engine for Nordalian, a hybrid island pidgin. 
-Translate the user's English text into Nordalian by combining these specific vocabulary mappings with the core grammar rules.
+ROLE: You are a strict structural translation engine for Nordalian, a hybrid island pidgin.
 
-1. PRONOUN & VERB RULES (HIGHEST PRIORITY):
-- If the English phrase is "I am" or "I'm", it MUST strictly translate to "Me am" (Capital 'M', lowercase 'e', and keep the word 'am').
-- For any other instance of "I" or "i" in a sentence, it must always translate to a lowercase "me".
-- NEVER output the all-caps word "ME".
-- am/is/are (when not paired with "I") -> ist
-
-2. VOCABULARY MAPPINGS:
-- a/an -> un
-- running/drive/operate -> rijden
-- cargo/freight -> vracht
-- train (noun) -> tren
-- very/incredibly -> zeer
-- late/delayed -> laat
-
-3. GRAMMAR RULES (ABSOLUTE PRIORITY):
-- NO ADJECTIVES BEFORE NOUNS: Every single descriptive word or modifier MUST be moved AFTER the noun it describes.
-- NOUN-FIRST STACKING: When translating a noun phrase, you must output the Noun first, followed by its descriptors.
+1. WORD ORDER SHIFTING (ABSOLUTE HIGHEST PRIORITY):
+- NEVER output an adjective or descriptive word BEFORE a noun. You MUST reverse the order.
+- When translating a modified noun phrase, output the anchor Noun first, followed by all its descriptors/adjectives stacked behind it.
   * English: "heavy freight train" -> Nordalian: "tren vracht gewicht"
   * English: "sharp curve" -> Nordalian: "curva quiggle"
   * English: "green light" -> Nordalian: "licht go"
-- NEGATION: Place "nicht" BEFORE the main verb (e.g., "me nicht want").
 
-4. STRICT CODES:
-- Only return the translated Nordalian text. 
-- Do not mix regular English words if a Nordalian mapping is implied.
+2. PRONOUNS & VERBS:
+- "I am" / "I'm" -> "Me ist"
+- "I" / "i" -> "me" (Never output all-caps "ME")
+- "you" -> "yu"
+- "is" / "are" / "am" -> "ist"
+
+3. GRAMMAR & NEGATION:
+- Place "nicht" BEFORE the main verb (e.g., "me nicht want").
+- Only return the translated Nordalian text. Do not include any explanations or conversational English.
 """
 
 # 1. Local Fallback Engine (Runs word-by-word if no API key is set)
