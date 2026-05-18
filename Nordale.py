@@ -158,6 +158,10 @@ NORDALIAN_DICTIONARY = {
     "fixed": "fixen",
     "break": "breaken",
     "end": "fini",
+    "land": "grond",
+    "ground": "grond",
+    "earth": "grond",
+    "mud": "modder",
 
     # Nations & Cultures
     "america": "De Amerika",
