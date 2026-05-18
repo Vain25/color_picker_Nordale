@@ -512,6 +512,11 @@ def local_translate(text: str) -> str:
         lower_word = word.lower()
         if lower_word in NORDALIAN_DICTIONARY:
             translated = NORDALIAN_DICTIONARY[lower_word]
+            
+            # Catch standalone 'I' immediately so it avoids the <=3 character uppercase filter
+            if lower_word == "i":
+                return "Me" if match.start() == 0 else "me"
+                
             if word.isupper():
                 return translated.upper() if len(translated) <= 3 else translated.capitalize()
             elif word[0].isupper():
@@ -534,12 +539,18 @@ def ai_translate(text: str, client) -> str:
     )
     translated_text = response.text.strip()
     
-    # BRUTE FORCE REGEX OVERRIDE: 
-    # Match standalone 'ME' tokens surrounded by word boundaries (\b), catching them next to commas, spaces, or periods.
+    # 1. Total eradication of all-caps tokens
     translated_text = re.sub(r'\bME\b', 'me', translated_text)
     
-    # Clean fallback context layout handling: Ensure if it starts the string, capitalization rules match.
-    if translated_text.startswith("me "):
+    # 2. Enforce lowercase 'me' mid-sentence, but let it be capitalized at the absolute start
+    def fix_pronoun_casing(m):
+        return "me" if m.start() > 0 else "Me"
+    translated_text = re.sub(r'\b[Mm]e\b', fix_pronoun_casing, translated_text)
+    
+    # 3. Final structural validation for sentence starters
+    if translated_text.lower().startswith("me am"):
+        translated_text = "Me am" + translated_text[5:]
+    elif translated_text.startswith("me "):
         translated_text = "Me " + translated_text[3:]
         
     return translated_text
