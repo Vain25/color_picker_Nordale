@@ -5,7 +5,8 @@ import re
 class NordaleEngine:
     def __init__(self):
         self.base_dir = os.path.dirname(os.path.abspath(__file__))
-        self.json_path = os.path.join(self.base_dir, "dictionary.json")
+        # FIXED: Points directly to the subfolder where git tracked the json
+        self.json_path = os.path.join(self.base_dir, "nordale", "dictionary.json")
         self.load_dictionary()
 
     def load_dictionary(self):
@@ -115,4 +116,3 @@ def ai_translate(text: str, client, engine: NordaleEngine) -> tuple:
     translated_text = re.sub(r'\b[Mm]e\b', fix_pronoun_casing, translated_text)
     
     return translated_text, new_words
-
