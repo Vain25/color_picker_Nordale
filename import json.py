@@ -1,96 +1,56 @@
+import json
 import os
-import re
-import streamlit as st
-from Nordale import NordaleEngine, ai_translate
 
-# Initialize the translation engine
-translator = NordaleEngine()
-NORDALIAN_DICTIONARY = translator.NORDALIAN_DICTIONARY
+# 1. Paste the brand new words from the AI inside this dictionary block
+NEW_AI_WORDS = {
+    "limestone": "kalkstein",
+    "quicklime": "kalk snel",
+    "lime kiln": "kalkofen",
+    "horse-drawn": "chevalgezogen",
+    "goods yard": "yard marchandises"
+}
 
-# Pull the core rules from the engine module
-from Nordale import NORDALIAN_BASE_RULES, get_combined_system_prompt
-
-def local_translate(text: str) -> str:
-    return translator.local_translate(text)
-
-# ==============================================================================
-# STREAMLIT USER INTERFACE
-# ==============================================================================
-st.set_page_config(page_title="Nordalian Language Translator", page_icon="🚂", layout="centered")
-
-# Sidebar - Settings and Documentation
-with st.sidebar:
-    st.subheader("🔑 Engine Settings")
+def merge_to_library():
+    json_path = os.path.join("nordale", "dictionary.json")
     
-    default_key = os.environ.get("GEMINI_API_KEY", "")
-    user_key = st.text_input("Enter Gemini API Key:", value=default_key, type="password")
-    
-    if user_key:
-        st.success("🟢 Custom AI Engine Active")
+    # Check if the dictionary file exists yet
+    if os.path.exists(json_path):
+        with open(json_path, "r", encoding="utf-8") as f:
+            try:
+                current_dictionary = json.load(f)
+            except json.JSONDecodeError:
+                print("Error: dictionary.json is corrupted or empty. Starting fresh.")
+                current_dictionary = {}
     else:
-        st.info("🟡 Running on Local Dictionary Fallback")
+        current_dictionary = {}
 
-    with st.expander("ℹ️ How to get a free API Key"):
-        st.markdown("""
-        To unlock advanced AI grammar features without using the shared fallback pool, you can get a free key from Google in less than a minute:
-        
-        1. Go to **[Google AI Studio](https://aistudio.google.com/)** and sign in with any standard Google account.
-        2. Click the prominent **"Create API Key"** button at the top left.
-        3. Select **"Create API key in new project"**.
-        4. Copy the long string of letters and numbers generated for you.
-        5. Paste it right into the box above and hit **Enter**!
-        """)
-        
-    st.markdown("---")
-    st.markdown("### 💰 Token Usage & Cost Transparency")
-    st.info("""
-    **Why is an API Key needed?**
-    Advanced AI translation runs on Google's infrastructure, which charges based on the length of text processed (tokens). 
+    # 2. Merge the new words into the main library
+    added_count = 0
+    updated_count = 0
     
-    * **The Breakdown:** $10.00 provides roughly **200,000 translations** on this tier. 
-    * **No Profit:** Zero percent of this goes to the developer.
+    for key, value in NEW_AI_WORDS.items():
+        # Lowercase the key to keep matching consistent
+        clean_key = key.lower().strip()
+        
+        if clean_key in current_dictionary:
+            if current_dictionary[clean_key] != value:
+                current_dictionary[clean_key] = value
+                updated_count += 1
+        else:
+            current_dictionary[clean_key] = value
+            added_count += 1
+
+    # 3. Ensure the directory exists and write back the unified JSON data
+    os.makedirs("nordale", exist_ok=True)
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(current_dictionary, f, indent=4, ensure_ascii=False)
+
+    print(f"--- Feedback Loop Complete ---")
+    print(f"Added {added_count} brand new terms.")
+    print(f"Updated {updated_count} existing definitions.")
+    print(f"Total words in your library now: {len(current_dictionary)}")
+
+if __name__ == "__main__":
+    merge_to_library()
     
-    Using a personal free key or letting the app roll over to the built-in *Local Fallback Loop* is always 100% free!
-    """)
-
-    st.markdown("---")
-    st.markdown("""
-    ### 🗺️ Federation Demographics
-    🔧 Faction Sectors:
-    * **English**: Capitals & Ports Layout Framework
-    * **Germans**: Mainline Heavy Steel & Machining
-    * **Dutch**: Canal Switch & Hydrological Networks
-    * **Norwegians**: Mountain Pass Infrastructure
-    * **Welsh-Adjacent**: Narrow-Gauge Valley Coal Mining
-    * **Romance Native**: Agrarian Valleys, Weather, & Time
-    """)
-
-# Main Content Interface
-st.title("🚂 Nordalian Language Translator")
-st.markdown("Convert standard English into Nordalian rail pidgin seamlessly.")
-
-english_text = st.text_area("Enter English Text:", placeholder="The heavy steel wagon is stuck on the steep incline.")
-
-if st.button("Translate", type="primary"):
-    if not english_text.strip():
-        st.warning("Please enter some text to translate.")
-    else:
-        with st.spinner("Processing regional dialects..."):
-            if user_key:
-                try:
-                    from google import genai
-                    client = genai.Client(api_key=user_key)
-                    result = ai_translate(english_text, client, NORDALIAN_DICTIONARY)
-                    st.subheader("Nordalian Pidgin:")
-                    st.code(result, language=None)
-                    st.caption("Processed via: Gemini AI Engine (Substrate Dynamic Integration)")
-                except Exception as e:
-                    result = local_translate(english_text)
-                    st.subheader("Nordalian Pidgin:")
-                    st.code(result, language=None)
-                    st.error(f"Processed via: Local Fallback Loop (AI Error: {e})")
-            else:
-                result = local_translate(english_text)
-                st.subheader("Nordalian Pidgin:")
-                st.code(result, language=None)
-                st.caption("Processed via: Local Dictionary Fallback Loop")
+    

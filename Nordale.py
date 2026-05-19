@@ -1,7 +1,9 @@
+# Move these imports inside Nordale.py at the top
 import json
 import os
 import re
 import streamlit as st
+from google.genai import types # Add this here
 
 class NordaleEngine:
     def __init__(self):
@@ -74,7 +76,7 @@ You are translating an English text into Nordalian. Utilize the historical frict
 
 SYSTEM_PROMPT = 
 You are the translation engine for the Nordalian language (an industrial, English-based pidgin).
-Your task is to translate the user's text into Nordalian based strictly on the following rules:
+Your task is to translate the user's text into Nordalian based strictly on the following rules:git status
 1. DICTIONARY PRIORITY: Check the provided JSON dictionary first. If an English word appears as an exact key, you MUST use its mapped translation. Never override explicit dictionary mappings.
 2. THE DUTCH-SPANISH GRUDGE (MERCANTILE BIAS): If an unmapped English word relates to bureaucracy, finance, legal contracts, or bad deals, the Dutch influence dominates. Actively avoid Spanish roots for negative mercantile concepts; use corrupted Dutch/Low German roots instead to describe corruption, dynamic failures, or legal trickery. Weaponize harsh, mocking Spanish derivatives specifically to describe things that are broken, cheap, or untrustworthy (e.g., use derivatives like "barato").
 3. THE NORWEGIAN CORPORATE OVERTAKE (RAIL DOMINANCE): If an unmapped English word relates to broken machinery, financial ruin, bankruptcy, or systemic failure on the tracks, the Norwegian substrate dominates. Express this using aggressive, prideful Norwegian-derived terms that subtly mock or reference the "bankrupt Swedish legacy" (e.g., terms like "nedtid", "konkurs").
