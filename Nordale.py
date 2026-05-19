@@ -101,17 +101,20 @@ def ai_translate(text: str, client, engine: NordaleEngine) -> tuple:
     translated_paragraphs = []
     all_new_words = {}
 
-    for paragraph in paragraphs:
+    for idx, paragraph in enumerate(paragraphs):
         if not paragraph.strip():
             translated_paragraphs.append("")
             continue
             
         try:
+            # Dynamically pull the latest system prompt including any words saved in previous paragraphs
+            system_prompt = get_combined_system_prompt(engine.NORDALIAN_DICTIONARY)
+            
             response = client.models.generate_content(
                 model='gemini-2.5-flash',
                 contents=paragraph,
                 config=types.GenerateContentConfig(
-                    system_instruction=get_combined_system_prompt(engine.NORDALIAN_DICTIONARY),
+                    system_instruction=system_prompt,
                     temperature=0.0,
                     response_mime_type="application/json"
                 )
@@ -120,12 +123,16 @@ def ai_translate(text: str, client, engine: NordaleEngine) -> tuple:
             data = json.loads(response.text.strip())
             translated_paragraphs.append(data.get("translation", ""))
             
-            # Merge any new words tracked from this paragraph
+            # Extract and immediately lock new words into your local JSON file
             new_words = data.get("new_vocabulary", {})
-            if isinstance(new_words, dict):
+            if isinstance(new_words, dict) and new_words:
                 all_new_words.update(new_words)
+                # LIVE SAVE CRITICAL FIX: Save straight to disk right now!
+                engine.save_new_words(new_words)
+                print(f"[LIVE SAVE] Paragraph {idx+1}: Added {len(new_words)} new words to dictionary.json")
                 
-        except Exception:
+        except Exception as e:
+            print(f"[FALLBACK] Error on paragraph {idx+1}: {e}")
             # Fall back safely to local dictionary rule if a specific block encounters an issue
             translated_paragraphs.append(engine.local_translate(paragraph))
             
