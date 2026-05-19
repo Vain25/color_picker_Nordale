@@ -93,26 +93,49 @@ def get_combined_system_prompt(dictionary: dict) -> str:
 def ai_translate(text: str, client, engine: NordaleEngine) -> tuple:
     from google.genai import types
     
-    response = client.models.generate_content(
-        model='gemini-2.5-flash',
-        contents=text,
-        config=types.GenerateContentConfig(
-            system_instruction=get_combined_system_prompt(engine.NORDALIAN_DICTIONARY),
-            temperature=0.0,
-            response_mime_type="application/json"
-        )
-    )
-    
-    try:
-        data = json.loads(response.text.strip())
-        translated_text = data.get("translation", "")
-        new_words = data.get("new_vocabulary", {})
-    except Exception:
-        return engine.local_translate(text), {}
+    if not text.strip():
+        return "", {}
+
+    # Break up massive input text into paragraph chunks to prevent websocket time-outs
+    paragraphs = text.split("\n")
+    translated_paragraphs = []
+    all_new_words = {}
+
+    for paragraph in paragraphs:
+        if not paragraph.strip():
+            translated_paragraphs.append("")
+            continue
+            
+        try:
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=paragraph,
+                config=types.GenerateContentConfig(
+                    system_instruction=get_combined_system_prompt(engine.NORDALIAN_DICTIONARY),
+                    temperature=0.0,
+                    response_mime_type="application/json"
+                )
+            )
+            
+            data = json.loads(response.text.strip())
+            translated_paragraphs.append(data.get("translation", ""))
+            
+            # Merge any new words tracked from this paragraph
+            new_words = data.get("new_vocabulary", {})
+            if isinstance(new_words, dict):
+                all_new_words.update(new_words)
+                
+        except Exception:
+            # Fall back safely to local dictionary rule if a specific block encounters an issue
+            translated_paragraphs.append(engine.local_translate(paragraph))
+            
+    # Reassemble paragraphs back into a unified document structure
+    translated_text = "\n".join(translated_paragraphs)
         
+    # Clean up pronoun layouts
     translated_text = re.sub(r'\bME\b', 'me', translated_text)
     def fix_pronoun_casing(m):
         return "me" if m.start() > 0 else "Me"
     translated_text = re.sub(r'\b[Mm]e\b', fix_pronoun_casing, translated_text)
     
-    return translated_text, new_words
+    return translated_text, all_new_words
