@@ -1,6 +1,11 @@
-import json
-import urllib.request
-import os
+# Change this:
+# from Nordale import NordaleEngine, ai_translate
+
+# To this:
+import sys
+# Add current directory to path so it can find Nordale.py
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from Nordale import NordaleEngine, ai_translate
 
 # Base paths
 base_dir = os.path.dirname(os.path.abspath(__file__))
