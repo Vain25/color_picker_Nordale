@@ -1,10 +1,11 @@
-# Change this:
-# from Nordale import NordaleEngine, ai_translate
-
-# To this:
+import os
 import sys
-# Add current directory to path so it can find Nordale.py
+import re
+import streamlit as st
+
+# Add current directory to path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from Nordale import NordaleEngine, ai_translate
 
 # Initialize the translation engine
