@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import streamlit as st
 
 class NordaleEngine:
     def __init__(self):
@@ -56,7 +57,7 @@ class NordaleEngine:
         return word_pattern.sub(replace_word, text)
 
 # ==============================================================================
-# SYSTEM PROMPT CONFIGURATION
+# HARDENED SYSTEM PROMPT CONFIGURATION (WITH LINGUISTIC MANGLING RULES)
 # ==============================================================================
 NORDALIAN_BASE_RULES = """
 ROLE: You are the structural translation engine for Nordalian, a hybrid island pidgin spoken within the Nordalian Federation. Structurally, it maintains a rigid English layout with mandatory adjective reversal. Lexically, it bridges an explicit dictionary with a deep historical substrate to dynamically handle unmapped English vocabulary.
@@ -78,6 +79,15 @@ RULES of ENGAGEMENT (WITH INTER-FACTION FRICTION):
 4. ADJECTIVE REVERSAL (ABSOLUTE PRIORITY): Noun modifiers or adjectives MUST be placed directly BEHIND the noun it modifies. Reverse pair ordering completely.
 5. ETHNONYM RULE: Any word referring to a human from a specific country or culture MUST be transformed into a Nordalian compound using the pattern "De [root]er" or "De [root]ander", drawing from Germanic or Romance roots. Examples: "Polish worker" -> "De Polander werker".
 
+CRITICAL LINGUISTIC MANGLED STYLE RULES:
+1. NO TEXTBOOK COPY-PASTING: Never output pure, grammatically correct textbook German, Dutch, French, or Spanish words. Nordalian is a highly broken, isolated island pidgin spoken by rough laborers, sailors, and industrial factions. 
+2. AGGRESSIVE PHONETIC CORRUPTION: You must systematically warp, contract, and simplify the phonetic roots of the source languages to show generations of linguistic drift.
+   - Do not write pure German "straße" -> corrupt it to "stras" or "strat".
+   - Do not write pure French "arrivée" -> corrupt it to "arriven" or "rivé".
+   - Do not write pure German "zimmer" -> corrupt it to "zimma".
+   - Do not write pure Dutch "buiten" -> corrupt it to "bute".
+3. BLEND THE SUBSTRATES: For common conversational and structural words, actively fuse Germanic syntax with Romance endings, or vice versa, to create a completely unique creole flavor that sounds like a distinct historical dialect, not a modern translation list.
+
 OUTPUT JSON FORMAT:
 You MUST respond strictly in valid JSON format containing exactly two keys:
 1. "translation": The fully translated Nordalian text line.
@@ -85,7 +95,7 @@ You MUST respond strictly in valid JSON format containing exactly two keys:
 
 CRITICAL KEY-VALUE RULES FOR NEW_VOCABULARY:
 - The KEY must always be the original lowercase ENGLISH word from the input text (e.g., "while", "could", "finally").
-- The VALUE must be the newly generated NORDALIAN word, colored by your faction history lore (e.g., "während", "können", "finalement").
+- The VALUE must be the newly generated MANGLED NORDALIAN word, colored by your faction history lore (e.g., "während" must become something like "wahren", "zimmer" becomes "zimma").
 - NEVER place German, Dutch, Norwegian, French, or Spanish words as the keys. The keys MUST remain English so the database can look them up later.
 - Do not include words that already exist in the NORDALIAN_DICTIONARY specification provided below.
 """
@@ -103,14 +113,21 @@ def ai_translate(text: str, client, engine: NordaleEngine) -> tuple:
         return "", {}
 
     # Break up massive input text into paragraph chunks to prevent websocket time-outs
-    paragraphs = text.split("\n")
+    paragraphs = [p.strip() for p in text.split("\n") if p.strip()]
     translated_paragraphs = []
     all_new_words = {}
+    total_paragraphs = len(paragraphs)
+
+    # UI ADDITION: Visual Trackers for your Streamlit window
+    st.markdown("### 🚂 Processing Lore Document")
+    progress_bar = st.progress(0.0)
+    status_text = st.empty()
 
     for idx, paragraph in enumerate(paragraphs):
-        if not paragraph.strip():
-            translated_paragraphs.append("")
-            continue
+        # Update progress bar metrics on screen
+        current_progress = (idx + 1) / total_paragraphs
+        progress_bar.progress(current_progress)
+        status_text.text(f"Processing Paragraph {idx+1}/{total_paragraphs} ({int(current_progress * 100)}%)...")
             
         try:
             # Dynamically pull the latest system prompt including any words saved in previous paragraphs
@@ -133,7 +150,7 @@ def ai_translate(text: str, client, engine: NordaleEngine) -> tuple:
             new_words = data.get("new_vocabulary", {})
             if isinstance(new_words, dict) and new_words:
                 all_new_words.update(new_words)
-                # LIVE SAVE CRITICAL FIX: Save straight to disk right now!
+                # LIVE SAVE: Save straight to disk right now!
                 engine.save_new_words(new_words)
                 print(f"[LIVE SAVE] Paragraph {idx+1}: Added {len(new_words)} new words to dictionary.json")
                 
@@ -142,8 +159,11 @@ def ai_translate(text: str, client, engine: NordaleEngine) -> tuple:
             # Fall back safely to local dictionary rule if a specific block encounters an issue
             translated_paragraphs.append(engine.local_translate(paragraph))
             
+    # Clean up browser UI statuses when done
+    status_text.text("✅ Lore compilation complete! All new words permanently saved to database.")
+    
     # Reassemble paragraphs back into a unified document structure
-    translated_text = "\n".join(translated_paragraphs)
+    translated_text = "\n\n".join(translated_paragraphs)
         
     # Clean up pronoun layouts
     translated_text = re.sub(r'\bME\b', 'me', translated_text)
