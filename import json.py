@@ -7,6 +7,9 @@ from Nordale import NordaleEngine, ai_translate
 translator = NordaleEngine()
 NORDALIAN_DICTIONARY = translator.NORDALIAN_DICTIONARY
 
+# Pull the core rules from the engine module
+from Nordale import NORDALIAN_BASE_RULES, get_combined_system_prompt
+
 def local_translate(text: str) -> str:
     return translator.local_translate(text)
 
@@ -44,6 +47,9 @@ with st.sidebar:
     **Why is an API Key needed?**
     Advanced AI translation runs on Google's infrastructure, which charges based on the length of text processed (tokens). 
     
+    * **The Breakdown:** $10.00 provides roughly **200,000 translations** on this tier. 
+    * **No Profit:** Zero percent of this goes to the developer.
+    
     Using a personal free key or letting the app roll over to the built-in *Local Fallback Loop* is always 100% free!
     """)
 
@@ -74,17 +80,10 @@ if st.button("Translate", type="primary"):
                 try:
                     from google import genai
                     client = genai.Client(api_key=user_key)
-                    
-                    # Capture translation and word dict
-                    result, new_words = ai_translate(english_text, client, translator)
-                    
-                    # Direct, unfiltered feed into dictionary.json
-                    if new_words:
-                        translator.save_new_words(new_words)
-                    
+                    result = ai_translate(english_text, client, NORDALIAN_DICTIONARY)
                     st.subheader("Nordalian Pidgin:")
                     st.code(result, language=None)
-                    st.caption("Processed via: Gemini AI Engine (Substrate Dynamic Integration + Silent Learning Active)")
+                    st.caption("Processed via: Gemini AI Engine (Substrate Dynamic Integration)")
                 except Exception as e:
                     result = local_translate(english_text)
                     st.subheader("Nordalian Pidgin:")
