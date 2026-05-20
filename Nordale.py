@@ -2,6 +2,7 @@
 import json
 import os
 import re
+import time  # 🛑 ADDED: Crucial for controlling the API request pace
 import streamlit as st
 from google.genai import types # Add this here
 
@@ -158,6 +159,11 @@ def ai_translate(text: str, client, engine: NordaleEngine) -> tuple:
                 # LIVE SAVE: Save straight to disk right now!
                 engine.save_new_words(new_words)
                 print(f"[LIVE SAVE] Paragraph {idx+1}: Added {len(new_words)} new words to dictionary.json")
+            
+            # 🛑 COOLDOWN TRACKER ADDED HERE:
+            # Forces the engine to wait 4 seconds between successful paragraph processing blocks.
+            # This balances your cumulative token history safely below the 1M token/min limit.
+            time.sleep(4.0)
                 
         except Exception as e:
             print(f"[FALLBACK] Error on paragraph {idx+1}: {e}")

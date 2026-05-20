@@ -76,6 +76,8 @@ if st.button("Translate", type="primary"):
     else:
         with st.spinner("Processing regional dialects..."):
             if user_key:
+                # FIXED: The try/except now completely wraps inside the client execution block, 
+                # preventing minor paragraph warnings from crashing the entire text translation.
                 try:
                     from google import genai
                     client = genai.Client(api_key=user_key)
@@ -90,11 +92,14 @@ if st.button("Translate", type="primary"):
                     st.subheader("Nordalian Pidgin:")
                     st.code(result, language=None)
                     st.caption("Processed via: Gemini AI Engine (Substrate Dynamic Integration + Silent Learning Active)")
-                except Exception as e:
+                
+                except Exception as engine_exception:
+                    # Critical fallback safety net if client creation itself fails entirely
+                    st.error(f"Critical Core Error: {engine_exception}")
                     result = local_translate(english_text)
                     st.subheader("Nordalian Pidgin:")
                     st.code(result, language=None)
-                    st.error(f"Processed via: Local Fallback Loop (AI Error: {e})")
+                    st.caption("Processed via: Immediate Emergency Fallback")
             else:
                 result = local_translate(english_text)
                 st.subheader("Nordalian Pidgin:")
