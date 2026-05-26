@@ -8,7 +8,8 @@ from streamlit_image_coordinates import streamlit_image_coordinates
 from streamlit_paste_button import paste_image_button
 
 # File Path Configuration
-CSV_FILE = r"C:\Users\Ali\Documents\Github Work\color_picker.py\modded_blocks_with_names.csv"
+# Updated line 11
+CSV_FILE = os.path.join("color_picker.py", "modded_blocks_with_names.csv")
 
 # --- Helper Functions ---
 def hex_to_rgb(hex_str):
